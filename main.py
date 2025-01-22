@@ -1,10 +1,14 @@
-import data
 from datetime import datetime
 import sqlalchemy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from flask import Flask, request, jsonify, g
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+from data import FlightData
 
 SQLITE_URI = "sqlite:///data/flights.sqlite3"
 IATA_LENGTH = 3
@@ -232,14 +236,83 @@ FUNCTIONS = {
 }
 
 
+def _convert_to_dict(results):
+    """
+    Convert a list of SQLAlchemy objects into a list of dictionaries.
+    FLIGHT_ID, ORIGIN_AIRPORT, DESTINATION_AIRPORT, AIRLINE, and DELAY
+    """
+    keys = [
+        "flight_id",
+        "origin_airport",
+        "destination_airport",
+        "airline",
+        "delay",
+    ]  # noqa E501
+    return [dict(zip(keys, result)) for result in results]
+
+
+app = Flask(__name__)
+limiter = Limiter(app=app, key_func=get_remote_address)
+
+
+@app.before_request
+def before_request():
+    g.data_manager = FlightData(SQLITE_URI)
+
+
+@app.route("/")
+@limiter.limit("10/minute")
+def index():
+    return "I am a teacup", 418
+
+
+@app.route("/api/flight_by_id", methods=["POST"])
+def api_flight_by_id():
+    flight_id = request.json.get("flight_id")
+    results = g.data_manager.get_flight_by_id(flight_id)
+    results_dict = _convert_to_dict(results)
+    return jsonify(results_dict)
+
+
+@app.route("/api/flights_by_date", methods=["POST"])
+def api_flights_by_date():
+    day = request.json.get("day")
+    month = request.json.get("month")
+    year = request.json.get("year")
+    results = g.data_manager.get_flights_by_date(
+        year=year, month=month, day=day
+    )  # noqa E501
+
+    results_dict = _convert_to_dict(results)
+    return jsonify(results_dict)
+
+
+@app.route("/api/delayed_flights_by_airline", methods=["POST"])
+def api_delayed_flights_by_airline():
+    airline = request.json.get("airline")
+    results = g.data_manager.get_delayed_flights_by_airline(airline)
+    results_dict = _convert_to_dict(results)
+    return jsonify(results_dict)
+
+
+@app.route("/api/delayed_flights_by_airport", methods=["POST"])
+def api_delayed_flights_by_airport():
+    IATA = request.json.get("IATA")
+    results = g.data_manager.get_delayed_flights_by_airport(IATA)
+    results_dict = _convert_to_dict(results)
+    return jsonify(results_dict)
+
+
 def main():
     # Create an instance of the Data Object using our SQLite URI
-    data_manager = data.FlightData(SQLITE_URI)
 
+    app.run("0.0.0.0", port=5001, debug=True)
+
+    # data_manager = data.FlightData(SQLITE_URI)
     # The Main Menu loop
-    while True:
-        choice_func = show_menu_and_get_input()
-        choice_func(data_manager)
+    # while True:
+    #     choice_func = show_menu_and_get_input()
+    #     choice_func(data_manager)
 
 
 if __name__ == "__main__":
