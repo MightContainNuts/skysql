@@ -15,6 +15,24 @@ WHERE
 ;
 """
 
+QUERY_FLIGHT_BY_DATE = """
+SELECT
+    flights.ID,
+    flights.ORIGIN_AIRPORT,
+    flights.DESTINATION_AIRPORT,
+    airlines.AIRLINE,
+    flights.AIRLINE_DELAY AS DELAY
+
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+WHERE
+    flights.YEAR = :year
+    AND flights.MONTH = :month
+    AND flights.DAY = :day
+
+"""
+
 
 class FlightData:
     """
@@ -52,6 +70,14 @@ class FlightData:
         """
         params = {"flight_id": flight_id}
         return self._execute_query(QUERY_FLIGHT_BY_ID, params)
+
+    def get_flights_by_date(self, day, month, year):
+        """
+        Searches for flight details using date.
+        If the flight was found, returns a list with a single record.
+        """
+        params = {"day": day, "month": month, "year": year}
+        return self._execute_query(QUERY_FLIGHT_BY_DATE, params)
 
     def __del__(self):
         """
