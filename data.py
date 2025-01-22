@@ -91,6 +91,48 @@ GROUP BY
 ORDER BY airlines.AIRLINE
 ;"""
 
+QUERY_PLOT_PERC_DELAYED_FLIGHTS_BY_HOUR = """
+SELECT
+    FLOOR(flights.DEPARTURE_TIME /100) AS HOUR,
+    COUNT(CASE
+        WHEN CAST(flights.AIRLINE_DELAY AS INT) > 0 THEN 1
+        ELSE NULL
+    END) * 100.0 / COUNT(flights.AIRLINE_DELAY) AS PERCENTAGE_DELAYED
+
+
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+    JOIN airports ON flights.ORIGIN_AIRPORT = airports.IATA_CODE
+
+GROUP BY
+    HOUR
+
+ORDER BY HOUR ASC
+;
+"""
+
+QUERY_PLOT_HEATMAP_DELAYS_ORIGIN_DEST = """
+SELECT
+    flights.ORIGIN_AIRPORT,
+    flights.DESTINATION_AIRPORT,
+    COUNT(CASE
+        WHEN CAST(flights.AIRLINE_DELAY AS INT) > 0 THEN 1
+        ELSE NULL
+    END) * 100.0 / COUNT(flights.AIRLINE_DELAY) AS PERCENTAGE_DELAYED
+
+
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+    JOIN airports ON flights.ORIGIN_AIRPORT = airports.IATA_CODE
+
+GROUP BY
+    flights.ORIGIN_AIRPORT,
+    flights.DESTINATION_AIRPORT
+;
+"""
+
 
 class FlightData:
     """
@@ -164,6 +206,23 @@ class FlightData:
         airline.
         """
         return self._execute_query(QUERY_PLOT_DELAYED_FLIGHTS_BY_AIRLINE, {})
+
+    def plot_percentage_of_delayed_flights_by_hour(self):
+
+        """
+        return
+        :return:
+        :rtype:
+        """
+        return self._execute_query(QUERY_PLOT_PERC_DELAYED_FLIGHTS_BY_HOUR, {})
+
+    def plot_heatmap_delays_origin_dest(self):
+        """
+        retun data for heat map
+        :return:
+        :rtype:
+        """
+        return self._execute_query(QUERY_PLOT_HEATMAP_DELAYS_ORIGIN_DEST, {})
 
     def __del__(self):
         """

@@ -3,6 +3,8 @@ from datetime import datetime
 import sqlalchemy
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 
 SQLITE_URI = "sqlite:///data/flights.sqlite3"
 IATA_LENGTH = 3
@@ -94,6 +96,66 @@ def plot_delayed_flights_by_airline_as_percentage(data_manager):
     plt.show()
 
 
+def plot_percentage_of_delayed_flights_by_hour(data_manager):
+    """
+    plot percentage of delayed flights by hour
+    :param data_manager:
+    :type data_manager:
+    :return:
+    :rtype:
+    """
+    results = data_manager.plot_percentage_of_delayed_flights_by_hour()
+    x, y = zip(*results)
+    colors = plt.cm.viridis(np.linspace(0, 1, len(x)))
+    plt.title("Hour of the day")
+    plt.bar(x, y, color=colors)
+    plt.xlabel("Airline")
+    plt.ylabel("Percentage of delayed flights")
+    plt.xticks(
+        ticks=range(len(x)), labels=x, rotation=0, fontsize=8, ha="center"
+    )  # noqa E501
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_heatmap_delays_origin_dest(data_manager):
+    """
+    plot heat map of delays
+    :param data_manager:
+    :type data_manager:
+    :return:
+    :rtype:
+    """
+    results = data_manager.plot_heatmap_delays_origin_dest()
+    df = pd.DataFrame(
+        results,
+        columns=[
+            "ORIGIN_AIRPORT",
+            "DESTINATION_AIRPORT",
+            "PERCENTAGE_DELAYED",
+        ],  # noqa E501
+    )
+    plt.title("Heatmap of delays")
+
+    heatmap_data = df.pivot(
+        index="ORIGIN_AIRPORT",
+        columns="DESTINATION_AIRPORT",
+        values="PERCENTAGE_DELAYED",
+    )
+    heatmap_data = heatmap_data.fillna(0)
+    sns.heatmap(
+        heatmap_data,
+        annot=False,
+        fmt=".1f",
+        cmap="YlGnBu",
+        cbar_kws={"label": "Percentage Delayed"},
+    )
+    plt.xticks(rotation=0, fontsize=8, ha="center")
+    plt.xticks(rotation=0, fontsize=8, ha="center")
+    plt.tight_layout()
+    plt.show()
+
+
 def print_results(results):
     """
     Get a list of flight results (List of dictionary-like objects from
@@ -161,7 +223,12 @@ FUNCTIONS = {
         plot_delayed_flights_by_airline_as_percentage,
         "Plot delayed flights by airline",
     ),  # noqa E501
-    6: (quit, "Exit"),
+    6: (
+        plot_percentage_of_delayed_flights_by_hour,
+        "Plot delayed flights by hour",
+    ),  # noqa E501
+    7: (plot_heatmap_delays_origin_dest, "Heatmap of delays"),
+    8: (quit, "Exit"),
 }
 
 
