@@ -33,6 +33,24 @@ WHERE
 
 """
 
+QUERY_DELAYED_FLIGHTS_BY_AIRLINE = """
+SELECT
+    flights.ID,
+    flights.ORIGIN_AIRPORT,
+    flights.DESTINATION_AIRPORT,
+    airlines.AIRLINE,
+    flights.AIRLINE_DELAY AS DELAY
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+WHERE
+    LOWER(airlines.AIRLINE) LIKE :search_airline AND
+    CAST(DELAY AS INT) >0
+
+ORDER BY airlines.AIRLINE, DELAY DESC
+;
+"""
+
 
 class FlightData:
     """
@@ -78,6 +96,17 @@ class FlightData:
         """
         params = {"day": day, "month": month, "year": year}
         return self._execute_query(QUERY_FLIGHT_BY_DATE, params)
+
+    def get_delayed_flights_by_airline(self, search_airline):
+        """
+        Searches for flight details using airline.
+        If the flight was found, returns a list with a single record.
+        """
+        search_airline = search_airline.strip().lower()
+        search_airline = "%" + search_airline + "%"
+        params = {"search_airline": search_airline}
+        print(params)
+        return self._execute_query(QUERY_DELAYED_FLIGHTS_BY_AIRLINE, params)
 
     def __del__(self):
         """
