@@ -30,6 +30,7 @@ WHERE
     flights.YEAR = :year
     AND flights.MONTH = :month
     AND flights.DAY = :day
+
 """
 
 
