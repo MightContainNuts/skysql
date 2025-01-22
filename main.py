@@ -1,6 +1,8 @@
 import data
 from datetime import datetime
 import sqlalchemy
+import matplotlib.pyplot as plt
+import numpy as np
 
 SQLITE_URI = "sqlite:///data/flights.sqlite3"
 IATA_LENGTH = 3
@@ -72,6 +74,26 @@ def flights_by_date(data_manager):
     print_results(results)
 
 
+def plot_delayed_flights_by_airline_as_percentage(data_manager):
+    """
+    plot percentages of delayed gflights
+    :param data_manager:
+    :type data_manager:
+    :return:
+    :rtype:
+    """
+    results = data_manager.plot_delayed_flights_by_airline_as_percentage()
+    x, y = zip(*results)
+    colors = plt.cm.viridis(np.linspace(0, 1, len(x)))
+    plt.title("Percentage of delayed flights by airline")
+    plt.bar(x, y, color=colors)
+    plt.xlabel("Airline")
+    plt.ylabel("Percentage of delayed flights")
+    plt.xticks(rotation=45, fontsize=8, ha="right")
+    plt.tight_layout()
+    plt.show()
+
+
 def print_results(results):
     """
     Get a list of flight results (List of dictionary-like objects from
@@ -135,7 +157,11 @@ FUNCTIONS = {
     2: (flights_by_date, "Show flights by date"),
     3: (delayed_flights_by_airline, "Delayed flights by airline"),
     4: (delayed_flights_by_airport, "Delayed flights by origin airport"),
-    5: (quit, "Exit"),
+    5: (
+        plot_delayed_flights_by_airline_as_percentage,
+        "Plot delayed flights by airline",
+    ),  # noqa E501
+    6: (quit, "Exit"),
 }
 
 

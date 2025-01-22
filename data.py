@@ -71,6 +71,26 @@ ORDER BY DELAY DESC
 ;
 """
 
+QUERY_PLOT_DELAYED_FLIGHTS_BY_AIRLINE = """
+SELECT
+    airlines.AIRLINE,
+    COUNT(CASE
+        WHEN CAST(flights.AIRLINE_DELAY AS INT) > 0 THEN 1
+        ELSE NULL
+    END) * 100.0 / COUNT(flights.AIRLINE_DELAY) AS PERCENTAGE_DELAYED
+
+
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+    JOIN airports ON flights.ORIGIN_AIRPORT = airports.IATA_CODE
+
+GROUP BY
+    flights.AIRLINE
+
+ORDER BY airlines.AIRLINE
+;"""
+
 
 class FlightData:
     """
@@ -137,6 +157,13 @@ class FlightData:
         IATA = "%" + IATA + "%"
         params = {"IATA": IATA}
         return self._execute_query(QUERY_DELAYED_FLIGHTS_BY_AIRPORT, params)
+
+    def plot_delayed_flights_by_airline_as_percentage(self):
+        """
+        Returns a list of records with the percentage of delayed flights by
+        airline.
+        """
+        return self._execute_query(QUERY_PLOT_DELAYED_FLIGHTS_BY_AIRLINE, {})
 
     def __del__(self):
         """
