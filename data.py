@@ -51,6 +51,26 @@ ORDER BY airlines.AIRLINE, DELAY DESC
 ;
 """
 
+QUERY_DELAYED_FLIGHTS_BY_AIRPORT = """
+
+SELECT
+    flights.ID,
+    flights.ORIGIN_AIRPORT,
+    flights.DESTINATION_AIRPORT,
+    airlines.AIRLINE,
+    flights.AIRLINE_DELAY AS DELAY
+FROM
+    flights
+    JOIN airlines ON flights.AIRLINE = airlines.ID
+    JOIN airports ON flights.ORIGIN_AIRPORT = airports.IATA_CODE
+WHERE
+    LOWER(airports.IATA_CODE) LIKE :IATA AND
+    CAST(DELAY AS INT) >0
+
+ORDER BY DELAY DESC
+;
+"""
+
 
 class FlightData:
     """
@@ -107,6 +127,16 @@ class FlightData:
         params = {"search_airline": search_airline}
         print(params)
         return self._execute_query(QUERY_DELAYED_FLIGHTS_BY_AIRLINE, params)
+
+    def get_delayed_flights_by_airport(self, IATA):
+        """
+        Searches for flight details using origin airport.
+        If the flight was found, returns a list with a single record.
+        """
+        IATA = IATA.strip().lower()
+        IATA = "%" + IATA + "%"
+        params = {"IATA": IATA}
+        return self._execute_query(QUERY_DELAYED_FLIGHTS_BY_AIRPORT, params)
 
     def __del__(self):
         """
